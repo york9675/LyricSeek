@@ -1,9 +1,6 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&height=300&color=gradient&text=LyricSeek&textBg=false&animation=twinkling&desc=Find%20Lyrics%20for%20any%20song%20with%20ease.&descAlign=50&descAlignY=70)
 
 <p align="center">
-  <a href="https://github.com/york9675/LyricSeek/releases" target="_blank">
-    <img alt="Version" src="https://img.shields.io/github/release/york9675/LyricSeek?style=for-the-badge" />
-  </a>
   <a href="#License" target="_blank">
     <img alt="License" src="https://img.shields.io/github/license/york9675/LyricSeek?logo=github&style=for-the-badge" />
   </a>
