@@ -2,10 +2,14 @@ const API_URL = "https://lrclib.net/api";
 
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
+const searchHistoryContainer = document.getElementById('search-history');
+const historyList = document.getElementById('history-list');
+const clearHistoryBtn = document.getElementById('clear-history');
 const resultsContainer = document.getElementById('results-container');
 const statusContainer = document.getElementById('status-container');
 const statusText = document.getElementById('status-text');
 const header = document.getElementById('app-header');
+const logo = document.querySelector('.logo');
 const themeToggle = document.getElementById('theme-toggle');
 const toggleAdvancedBtn = document.getElementById('toggle-advanced');
 const advancedSearchContainer = document.getElementById('advanced-search-container');
@@ -17,7 +21,36 @@ const advId = document.getElementById('adv-id');
 // --- Initialization ---
 window.addEventListener('DOMContentLoaded', () => {
     initTheme();
+    loadHistory();
     handleInitialLoad();
+});
+
+// --- Logo Click (Reset) ---
+logo.addEventListener('click', () => {
+    // Clear inputs
+    searchInput.value = '';
+    advTrack.value = '';
+    advArtist.value = '';
+    advAlbum.value = '';
+    advId.value = '';
+
+    // Clear results
+    resultsContainer.innerHTML = '';
+    
+    // Reset UI State
+    header.classList.remove('active');
+    statusContainer.classList.add('hidden');
+    
+    // Reset URL
+    window.history.pushState({}, '', window.location.pathname);
+    
+    // Close Advanced Search if open
+    if (!advancedSearchContainer.classList.contains('hidden')) {
+        advancedSearchContainer.classList.add('hidden');
+        toggleAdvancedBtn.classList.remove('active');
+        searchInput.disabled = false;
+        searchInput.placeholder = "Song title, artist, or album...";
+    }
 });
 
 // --- Advanced Search Toggle ---
@@ -27,6 +60,7 @@ toggleAdvancedBtn.addEventListener('click', () => {
     if (isHidden) {
         // Show Advanced
         advancedSearchContainer.classList.remove('hidden');
+        hideHistory(); // Use helper
         toggleAdvancedBtn.classList.add('active');
         searchInput.value = '';
         searchInput.disabled = true;
@@ -35,10 +69,14 @@ toggleAdvancedBtn.addEventListener('click', () => {
     } else {
         // Hide Advanced
         advancedSearchContainer.classList.add('hidden');
+        // Restore history only if not viewing results
+        if (searchHistory.length > 0 && !header.classList.contains('active')) {
+
+        }
         toggleAdvancedBtn.classList.remove('active');
         searchInput.disabled = false;
         searchInput.placeholder = "Song title, artist, or album...";
-        searchInput.focus();
+        searchInput.focus(); // This will trigger showHistory via focus listener
     }
 });
 
@@ -48,7 +86,8 @@ const closeModalBtn = document.getElementById('close-modal');
 const modalTitle = document.getElementById('modal-title');
 const modalArtist = document.getElementById('modal-artist');
 const modalAlbum = document.getElementById('modal-album');
-const modalId = document.getElementById('modal-id');
+const modalId = document.getElementById('modal-id-content');
+const copyIdBtn = document.getElementById('copy-id-btn');
 const lyricsDisplay = document.getElementById('lyrics-display');
 const btnViewPlain = document.getElementById('btn-view-plain');
 const btnViewSynced = document.getElementById('btn-view-synced');
@@ -88,6 +127,114 @@ themeToggle.addEventListener('click', () => {
     const newTheme = isDark ? 'light' : 'dark';
     applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
+});
+
+// --- Search History ---
+let searchHistory = [];
+
+function loadHistory() {
+    const saved = localStorage.getItem('searchHistory');
+    if (saved) {
+        searchHistory = JSON.parse(saved);
+    }
+}
+
+function saveHistory() {
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+}
+
+function addToHistory(query) {
+    if (!query) return;
+    
+    // Remove if already exists to move to top
+    searchHistory = searchHistory.filter(item => item.toLowerCase() !== query.toLowerCase());
+    
+    // Add to front
+    searchHistory.unshift(query);
+    
+    // Limit to 7 items
+    if (searchHistory.length > 7) {
+        searchHistory.pop();
+    }
+    
+    saveHistory();
+    renderHistory();
+}
+
+function removeFromHistory(index) {
+    searchHistory.splice(index, 1);
+    saveHistory();
+    renderHistory();
+    if (searchHistory.length === 0) hideHistory();
+    searchInput.focus();
+}
+
+function renderHistory() {
+    historyList.innerHTML = '';
+    
+    searchHistory.forEach((query, index) => {
+        const item = document.createElement('div');
+        item.classList.add('history-item');
+        item.innerHTML = `
+            <div class="history-item-content">
+                <span class="material-icons-round history-icon">history</span>
+                <span class="history-text">${escapeHtml(query)}</span>
+            </div>
+            <button class="btn-remove-item" title="Remove from history">
+                <span class="material-icons-round">close</span>
+            </button>
+        `;
+        
+        item.querySelector('.history-item-content').addEventListener('click', () => {
+            searchInput.value = query;
+            performSearch();
+            hideHistory();
+        });
+
+        item.querySelector('.btn-remove-item').addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent search trigger
+            removeFromHistory(index);
+        });
+
+        historyList.appendChild(item);
+    });
+}
+
+function showHistory() {
+    if (searchHistory.length > 0 && advancedSearchContainer.classList.contains('hidden')) {
+        searchHistoryContainer.classList.remove('hidden');
+        document.querySelector('.search-box').classList.add('history-open');
+        renderHistory();
+    }
+}
+
+function hideHistory() {
+    searchHistoryContainer.classList.add('hidden');
+    document.querySelector('.search-box').classList.remove('history-open');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+    searchHistory = [];
+    saveHistory();
+    renderHistory();
+    hideHistory();
+});
+
+// Show history when focusing search input
+searchInput.addEventListener('focus', showHistory);
+
+// Hide when clicking outside
+document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.search-wrapper');
+    if (!wrapper || !wrapper.contains(e.target)) {
+        hideHistory();
+    }
 });
 
 // --- Search ---
@@ -152,6 +299,12 @@ async function performSearch() {
     }
 
     if (!hasSearchCriteria) return;
+
+    // Save to history if simple search
+    if (!isAdvanced && query) {
+        addToHistory(query);
+    }
+    hideHistory();
 
     // Update Browser URL
     const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
@@ -230,7 +383,7 @@ async function openLyrics(track) {
     modalTitle.innerText = track.trackName;
     modalArtist.innerText = track.artistName;
     modalAlbum.innerText = track.albumName || "Unknown Album";
-    modalId.innerText = "ID: " + track.id;
+    modalId.innerText = track.id;
     lyricsDisplay.innerText = "Loading lyrics...";
     modal.classList.remove('hidden');
 
@@ -271,7 +424,7 @@ function switchView(type) {
         lyricsDisplay.innerText = currentLyrics.plain;
         
         // Update Download Button
-        downloadText.innerText = "Download";
+        downloadText.innerText = "Download .txt";
         btnDownload.disabled = !currentLyrics.plain;
         
     } else {
@@ -280,7 +433,7 @@ function switchView(type) {
         lyricsDisplay.innerText = currentLyrics.synced ? currentLyrics.synced : "Synced lyrics not available for this track.";
         
         // Update Download Button
-        downloadText.innerText = "Download";
+        downloadText.innerText = "Download .lrc";
         btnDownload.disabled = !currentLyrics.synced;
     }
 }
@@ -301,8 +454,29 @@ btnCopy.addEventListener('click', () => {
     
     navigator.clipboard.writeText(text).then(() => {
         const originalHtml = btnCopy.innerHTML;
-        btnCopy.innerHTML = `<span class="material-icons-round">check</span> Copied`;
+        btnCopy.innerHTML = `<span class="material-icons-round">check</span> <span class="btn-text">Copied</span>`;
         setTimeout(() => btnCopy.innerHTML = originalHtml, 2000);
+    });
+});
+
+// Copy ID
+copyIdBtn.addEventListener('click', () => {
+    const id = modalId.innerText;
+    if (!id) return;
+    
+    navigator.clipboard.writeText(id).then(() => {
+         const icon = copyIdBtn.querySelector('.material-icons-round');
+         const originalIcon = icon.innerText;
+         
+         icon.innerText = 'check';
+         icon.style.color = 'var(--primary)';
+         
+         setTimeout(() => {
+             icon.innerText = originalIcon;
+             icon.style.color = '';
+         }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy ID: ', err);
     });
 });
 

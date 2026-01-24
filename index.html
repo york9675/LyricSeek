@@ -25,15 +25,25 @@
             <h1 class="logo">Lyric<span class="highlight">Seek</span></h1>
             <p class="subtitle">Find lyrics for any song with ease.</p>
             
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Song title, artist, or album..." autocomplete="off">
-                <button id="toggle-advanced" aria-label="Advanced Search" title="Advanced Search">
-                    <span class="material-icons-round">tune</span>
-                </button>
-                <div class="divider-vertical"></div>
-                <button id="search-btn" aria-label="Search" title="Search">
-                    <span class="material-icons-round">search</span>
-                </button>
+            <div class="search-wrapper">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Song title, artist, or album..." autocomplete="off">
+                    <button id="toggle-advanced" aria-label="Advanced Search" title="Advanced Search">
+                        <span class="material-icons-round">tune</span>
+                    </button>
+                    <div class="divider-vertical"></div>
+                    <button id="search-btn" aria-label="Search" title="Search">
+                        <span class="material-icons-round">search</span>
+                    </button>
+                </div>
+
+                <div id="search-history" class="search-history hidden">
+                    <div class="history-header">
+                        <span>Recent Searches</span>
+                        <button id="clear-history">Clear All</button>
+                    </div>
+                    <div id="history-list" class="history-list"></div>
+                </div>
             </div>
 
             <div id="advanced-search-container" class="advanced-search hidden">
@@ -69,7 +79,12 @@
                     <h2 id="modal-title">Song Title</h2>
                     <p id="modal-artist">Artist Name</p>
                     <p id="modal-album">Album Name</p>
-                    <p id="modal-id" class="meta-id">ID: 000000</p>
+                    <div class="id-wrapper">
+                        <p class="meta-id">ID: <span id="modal-id-content">000000</span></p>
+                        <button id="copy-id-btn" class="icon-btn-small" aria-label="Copy ID" title="Copy ID">
+                            <span class="material-icons-round">content_copy</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="header-controls">
@@ -88,11 +103,11 @@
 
             <div class="modal-actions">
                 <button id="btn-copy" class="action-btn">
-                    <span class="material-icons-round">content_copy</span> Copy
+                    <span class="material-icons-round">content_copy</span> <span class="btn-text">Copy</span>
                 </button>
                 
                 <button id="btn-download" class="action-btn primary">
-                    <span class="material-icons-round">download</span> <span id="download-text">Download</span>
+                    <span class="material-icons-round">download</span> <span id="download-text" class="btn-text">Download</span>
                 </button>
             </div>
 

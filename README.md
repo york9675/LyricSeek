@@ -53,14 +53,14 @@ Lyrics data provided by [LRCLIB](https://lrclib.net/).
 **Home Screen**
 ![Home](assets/screenshots/home.png)
 
+**Lyrics View**
+![Lyrics](assets/screenshots/lyrics-view.png)
+
 **Advanced Search**
 ![Advanced](assets/screenshots/advanced-search.png)
 
 **Search Results**
 ![Results](assets/screenshots/search-results.png)
-
-**Lyrics View**
-![Lyrics](assets/screenshots/lyrics-view.png)
 
 ## Bug report / Feedback
 

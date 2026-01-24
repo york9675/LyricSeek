@@ -72,9 +72,16 @@ body {
 /* Header & Search */
 header { text-align: center; margin-top: 15vh; transition: margin-top 0.5s ease; }
 header.active { margin-top: 0; margin-bottom: 30px; }
-.logo { font-size: 3rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 0.5rem; }
+.logo { font-size: 3rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 0.5rem; cursor: pointer; }
 .highlight { color: var(--primary); }
 .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+
+.search-wrapper {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+    z-index: 100;
+}
 
 .search-box {
     display: flex; background: var(--card-bg);
@@ -82,8 +89,17 @@ header.active { margin-top: 0; margin-bottom: 30px; }
     padding: 5px 5px 5px 20px; box-shadow: var(--shadow);
     align-items: center;
     gap: 5px;
-    max-width: 600px; margin: 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 102;
+    transition: border-radius 0.2s, border-color 0.2s;
 }
+
+.search-box.history-open {
+    border-radius: 15px 15px 0 0;
+    border-bottom-color: transparent;
+}
+
 .search-box:focus-within { border-color: var(--primary); }
 #search-input { flex: 1; min-width: 0; border: none; background: transparent; font-size: 1.1rem; color: var(--text-color); outline: none; }
 #search-btn {
@@ -178,19 +194,37 @@ header.active { margin-top: 0; margin-bottom: 30px; }
 
 /* Footer Actions */
 .modal-actions {
-    padding: 15px 20px; border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 20px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; align-items: center; gap: 12px;
     background: var(--card-bg);
     border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
 }
 
 .action-btn {
-    flex: 1;
-    padding: 12px 18px; border-radius: 10px; border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 12px; border: 1px solid var(--border);
     background: var(--bg-color); color: var(--text-color);
     font-weight: 600; font-size: 1rem;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; 
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.action-btn .btn-text {
+    max-width: 0;
+    opacity: 0;
+    margin-left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: max-width 0.3s ease, opacity 0.2s ease, margin 0.3s ease;
+}
+
+.action-btn:hover .btn-text {
+    max-width: 150px;
+    opacity: 1;
+    margin-left: 8px;
+}
+
 .action-btn:hover { background: var(--border); }
 .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
 .action-btn.primary:hover { background: var(--primary-hover); }
@@ -279,6 +313,131 @@ footer a { color: var(--primary); text-decoration: none; }
     background: transparent;
 }
 
+/* Search History */
+.search-history {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: -2px;
+    z-index: 103;
+    
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-top: none;
+    
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    
+    width: 100%;
+    padding-top: 5px;
+    
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeIn 0.2s ease;
+    transform-origin: top;
+}
+
+.search-box:focus-within ~ .search-history, 
+.search-history:hover {
+    border-color: var(--primary);
+}
+
+.search-history.hidden { display: none; }
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    background: rgba(0,0,0,0.02);
+}
+
+#clear-history {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 5px;
+}
+#clear-history:hover { background: var(--hover-bg); border-radius: 4px; }
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 8px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* To push delete button right */
+    gap: 10px;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+.history-item:last-child { border-bottom: none; }
+.history-item:hover { background: var(--hover-bg); }
+
+.history-item-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.history-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-icon {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.btn-remove-item {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.history-item:hover .btn-remove-item {
+    opacity: 1;
+}
+
+.btn-remove-item:hover {
+    background-color: var(--hover-bg);
+    color: var(--text-color);
+}
+
+.btn-remove-item .material-icons-round {
+    font-size: 1rem;
+}
+
 .advanced-search-toggle { display: none; }
 
 .meta-id {
@@ -286,6 +445,41 @@ footer a { color: var(--primary); text-decoration: none; }
     font-size: 0.8rem;
     color: var(--text-secondary);
     opacity: 0.7;
-    margin-top: 4px;
+    margin-top: 4px; /* Adjust if needed, was 4px */
     letter-spacing: 0.5px;
+}
+
+.id-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.id-wrapper .meta-id {
+    margin-top: 0;
+}
+
+.icon-btn-small {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.icon-btn-small:hover {
+    background-color: var(--hover-bg);
+    opacity: 1;
+    color: var(--primary);
+}
+
+.icon-btn-small .material-icons-round {
+    font-size: 14px;
 }
