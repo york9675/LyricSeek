@@ -100,6 +100,7 @@ const downloadText = document.getElementById('download-text');
 let currentLyrics = { plain: "", synced: "" };
 let currentView = "plain";
 let currentTrackInfo = {};
+let activeHistoryIndex = -1;
 
 // --- Year ---
 document.getElementById('year').innerText = new Date().getFullYear();
@@ -175,6 +176,9 @@ function renderHistory() {
     searchHistory.forEach((query, index) => {
         const item = document.createElement('div');
         item.classList.add('history-item');
+        if (index === activeHistoryIndex) {
+            item.classList.add('active');
+        }
         item.innerHTML = `
             <div class="history-item-content">
                 <span class="material-icons-round history-icon">history</span>
@@ -189,6 +193,11 @@ function renderHistory() {
             searchInput.value = query;
             performSearch();
             hideHistory();
+        });
+
+        item.addEventListener('mouseenter', () => {
+            activeHistoryIndex = index;
+            updateHistorySelection();
         });
 
         item.querySelector('.btn-remove-item').addEventListener('click', (e) => {
@@ -211,6 +220,26 @@ function showHistory() {
 function hideHistory() {
     searchHistoryContainer.classList.add('hidden');
     document.querySelector('.search-box').classList.remove('history-open');
+    activeHistoryIndex = -1;
+}
+
+function updateHistorySelection() {
+    if (activeHistoryIndex >= searchHistory.length) {
+        activeHistoryIndex = -1;
+    }
+    const items = historyList.querySelectorAll('.history-item');
+    items.forEach((item, index) => {
+        item.classList.toggle('active', index === activeHistoryIndex);
+    });
+
+    if (activeHistoryIndex >= 0 && activeHistoryIndex < searchHistory.length) {
+        const selectedQuery = searchHistory[activeHistoryIndex];
+        searchInput.value = selectedQuery;
+        const activeItem = items[activeHistoryIndex];
+        if (activeItem) {
+            activeItem.scrollIntoView({ block: 'nearest' });
+        }
+    }
 }
 
 function escapeHtml(text) {
@@ -239,8 +268,34 @@ document.addEventListener('click', (e) => {
 
 // --- Search ---
 searchBtn.addEventListener('click', performSearch);
-searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') performSearch();
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (searchHistory.length === 0 || !advancedSearchContainer.classList.contains('hidden')) return;
+        e.preventDefault();
+
+        if (searchHistoryContainer.classList.contains('hidden')) {
+            showHistory();
+        }
+
+        if (e.key === 'ArrowDown') {
+            activeHistoryIndex = activeHistoryIndex < searchHistory.length - 1 ? activeHistoryIndex + 1 : 0;
+        } else {
+            activeHistoryIndex = activeHistoryIndex > 0 ? activeHistoryIndex - 1 : searchHistory.length - 1;
+        }
+
+        updateHistorySelection();
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        if (!searchHistoryContainer.classList.contains('hidden') && activeHistoryIndex >= 0) {
+            e.preventDefault();
+            performSearch();
+            hideHistory();
+            return;
+        }
+        performSearch();
+    }
 });
 
 async function performSearch() {
