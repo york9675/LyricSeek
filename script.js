@@ -101,6 +101,7 @@ let currentLyrics = { plain: "", synced: "" };
 let currentView = "plain";
 let currentTrackInfo = {};
 let activeHistoryIndex = -1;
+let hoveredHistoryIndex = -1;
 
 // --- Year ---
 document.getElementById('year').innerText = new Date().getFullYear();
@@ -196,8 +197,16 @@ function renderHistory() {
         });
 
         item.addEventListener('mouseenter', () => {
+            historyList.classList.remove('keyboard-nav');
+            hoveredHistoryIndex = index;
             activeHistoryIndex = index;
-            updateHistorySelection();
+            updateHistorySelection({ updateInput: false });
+        });
+
+        item.addEventListener('mouseleave', () => {
+            if (hoveredHistoryIndex === index) {
+                hoveredHistoryIndex = -1;
+            }
         });
 
         item.querySelector('.btn-remove-item').addEventListener('click', (e) => {
@@ -223,7 +232,7 @@ function hideHistory() {
     activeHistoryIndex = -1;
 }
 
-function updateHistorySelection() {
+function updateHistorySelection({ updateInput = true } = {}) {
     if (activeHistoryIndex >= searchHistory.length) {
         activeHistoryIndex = -1;
     }
@@ -233,11 +242,13 @@ function updateHistorySelection() {
     });
 
     if (activeHistoryIndex >= 0 && activeHistoryIndex < searchHistory.length) {
-        const selectedQuery = searchHistory[activeHistoryIndex];
-        searchInput.value = selectedQuery;
         const activeItem = items[activeHistoryIndex];
         if (activeItem) {
             activeItem.scrollIntoView({ block: 'nearest' });
+        }
+        if (updateInput) {
+            const selectedQuery = searchHistory[activeHistoryIndex];
+            searchInput.value = selectedQuery;
         }
     }
 }
@@ -255,6 +266,17 @@ clearHistoryBtn.addEventListener('click', () => {
     hideHistory();
 });
 
+// Clear hover highlight when leaving history list
+historyList.addEventListener('mouseleave', () => {
+    activeHistoryIndex = -1;
+    hoveredHistoryIndex = -1;
+    updateHistorySelection({ updateInput: false });
+});
+
+historyList.addEventListener('mousemove', () => {
+    historyList.classList.remove('keyboard-nav');
+});
+
 // Show history when focusing search input
 searchInput.addEventListener('focus', showHistory);
 
@@ -269,6 +291,14 @@ document.addEventListener('click', (e) => {
 // --- Search ---
 searchBtn.addEventListener('click', performSearch);
 searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        hideHistory();
+        searchInput.blur();
+        activeHistoryIndex = -1;
+        return;
+    }
+
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (searchHistory.length === 0 || !advancedSearchContainer.classList.contains('hidden')) return;
         e.preventDefault();
@@ -283,7 +313,11 @@ searchInput.addEventListener('keydown', (e) => {
             activeHistoryIndex = activeHistoryIndex > 0 ? activeHistoryIndex - 1 : searchHistory.length - 1;
         }
 
+        historyList.classList.add('keyboard-nav');
         updateHistorySelection();
+        if (hoveredHistoryIndex !== -1 && hoveredHistoryIndex === activeHistoryIndex) {
+            historyList.classList.remove('keyboard-nav');
+        }
         return;
     }
 

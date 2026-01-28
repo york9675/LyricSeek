@@ -398,6 +398,7 @@ footer a { color: var(--primary); text-decoration: none; }
 }
 .history-item:last-child { border-bottom: none; }
 .history-item:hover { background: var(--hover-bg); }
+.history-list.keyboard-nav .history-item:hover { background: transparent; }
 .history-item.active {
     background: var(--hover-bg);
 }
@@ -438,6 +439,10 @@ footer a { color: var(--primary); text-decoration: none; }
 
 .history-item:hover .btn-remove-item {
     opacity: 1;
+}
+
+.history-list.keyboard-nav .history-item:hover .btn-remove-item {
+    opacity: 0;
 }
 
 .btn-remove-item:hover {
